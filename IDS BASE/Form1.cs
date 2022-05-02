@@ -7,13 +7,27 @@ namespace IDS_BASE
             InitializeComponent();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void RUN_btn_Click(object sender, EventArgs e)
         {
 
 
-
+            Input("temp");
 
 
         }
+
+        public void Input(string filePath)
+        {
+
+             string thisisstring = "TEXT";
+            Console.WriteLine(filePath);
+
+
+        }
+
+
+
+
+
     }
 }
