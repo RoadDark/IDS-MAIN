@@ -9,20 +9,21 @@ namespace IDS_BASE
 {
     public partial class Form1 : Form
     {
-      
+        string[]? src_G;
+        double[]? srcCommonality_G;
         public Form1()
         {
             InitializeComponent();
+        
 
-           
         }
 
         private void RUN_btn_Click(object sender, EventArgs e)
         {
 
             // Hard Coded for TESTING need to may user changable
-            Input(@"H:\Visual Studio Solutions\IDS BASE\IDS BASE\bin\Debug\DATA\MixedBefireInfection.xlsx");
-
+             Input(@"H:\Visual Studio Solutions\IDS BASE\IDS BASE\bin\Debug\DATA\MixedBefireInfection.xlsx");
+           
 
         }      
 
@@ -47,6 +48,7 @@ namespace IDS_BASE
             range = sheet.UsedRange;
 
             string[] Results = scrape(4);
+            (src_G, srcCommonality_G) = SourceAddressNode(Results, true);
 
             // used to Scrape the Rows out of a single coloum !!! CAPED AT 15000 rows for testing because of SPEED !!!
             string[] scrape(int coloum) {
@@ -56,7 +58,7 @@ namespace IDS_BASE
                                 //itrate thew every single ROW for a SELECTED Coloum            
                 int n = 500;
                 List<string> Scrape = new List<string> { };
-                for (int i = 1; i <= 15000; i++)
+                for (int i = 2; i <= 8000; i++)
                 {
                     if (i > n) { Console.WriteLine(i.ToString()); n += 500; }
                     if (range.Cells[i, coloum] != null && range.Cells[i, coloum].Text != null)
@@ -77,7 +79,7 @@ namespace IDS_BASE
                 Console.WriteLine("copying Done");
                 Scrape.Clear();
                 return Results;
-             }
+            }
 
 
 
@@ -103,7 +105,57 @@ namespace IDS_BASE
             
 
         }
-      
+        public (string[] , double[]) SourceAddressNode(string[] Sources, bool Trainng)
+        {if (Trainng)
+            {   
+                List<string> Src = new List<string>();
+                List<int> comanality = new List<int>();
+                string Sample = string.Empty;
+                //Look for duplacats based on sample and count them
+                for (int i = 0; i < Sources.Length; i++)
+                {  if (Sources[i] != string.Empty)
+                    {
+                        Sample = Sources[i];
+                        int count = 0;
+                        for (int j = 0; j < Sources.Length; j++)
+                        {
+                            if (Sources[j] == Sample)
+                            {
+                                count++;
+                                Sources[j] = string.Empty;
+                            }
+                           
+
+                        }
+                        // reccord the Comanality of those duplcates
+                        Src.Add(Sample);
+                        comanality.Add(count);
+                    }
+                    Sample = string.Empty;
+                }
+                string[] Src_A = Src.ToArray();
+                int[] comanality_A = comanality.ToArray();
+
+                Console.WriteLine(comanality_A.Max().ToString());
+                Console.WriteLine(comanality_A.Min().ToString());
+                double[] comanality_D = new double[comanality_A.Length];
+                for (int i = 0; i < comanality_A.Length; i++){
+                    comanality_D[i] = (double)comanality_A[i] / (double)comanality_A.Max();                                   
+                }
+
+
+
+
+
+                return (Src_A, comanality_D);
+
+         }
+         else
+         {
+                return (null, null);
+         }
+
+        }
 
 
 
