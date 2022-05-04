@@ -55,7 +55,28 @@ namespace IDS_BASE
         }
         private void Sensitivity_tb_Scroll(object sender, EventArgs e)
         {
-            
+            int SensitivityInput = Sensitivity_tb.Value;
+            double Sensitivity = (double)SensitivityInput / 10;
+            sensitivity_txt.Text = Sensitivity.ToString();
+        }
+
+        private void SensitivityTip_pb_Click(object sender, EventArgs e)
+        {   // This is a tool Tip for the Sensitivity Settinfg
+            MessageBox.Show("This is Used to adjust the Sensitivity of the Model, 1 being the higest Sensitivity, will trigger at allmost everything.\nAnd 0 being the opposite the model will trigger with only the packets with the highest suspicion.\n0.2 is default.", "Sensitivity Value");
+
+
+        }
+        private void TrainingData_pb_Click(object sender, EventArgs e)
+        {// Help message for the Traing Data Ammount % 
+            MessageBox.Show("This is the % of The Training Data to use for the Traing\nThis may want to be Adjusted with Large data sets for Time\nDefault is 10%","Traing Data Ammount");// Set to .7% for Code testing
+        }
+        private void dataSet_pb_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("This is the % of The Data Set to use for the Analyse phase\nThis may want to be Adjusted with Large data sets for Time\nDefault is 10%", "Data Set Ammount");// Set to .7% for Code testing
+        }
+        private void dataSetCheck_pb_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("This Check will use the same File that was used for Traing, for analysis.\nIt will not use the same Packets, it will start where the traing finished, in that file.\nCannot be used when using 100% of traing file.", "Train Data As Data Set");
         }
 
 
@@ -70,8 +91,8 @@ namespace IDS_BASE
             }
             catch
             {
-                 MessageBox.Show("USE Numbers in the sensitivity bettween 1 and 0 (0.3)");
-                 sensitivity = .3;
+                 MessageBox.Show("USE Numbers in the sensitivity bettween 1 and 0 \n (0.3) For Example");
+                 sensitivity = .2;
             }
 
             double[] safety_Array = new double[6];
@@ -92,50 +113,81 @@ namespace IDS_BASE
             int rowCount = range.Rows.Count;
             int ColoumnsCount = range.Columns.Count;
             //itrate thew every single ROW for a SELECTED Coloum            
-            int n = 8500;
+            
             string[] data = new string[6];
-            for (int i = 8000; i <= 16000; i++) // using the Seccind set of 8000 ROWS for this PART
+          
+            double Percentage;
+            if (DataSetAmmount_txt.Text != string.Empty) // check if they Enterd a Precentage
             {
-
-                for (int j = 4; j < 9; j++) // Goto 9 For all relavent Data int the END GOAL
+                try // Check if they enterd a valid Precentage 
                 {
-                       // check if cell has DATA then read it
-                    if (range.Cells[i, j] != null && range.Cells[i, j].Text != null)
-                    {
+                    Percentage = Convert.ToDouble(TraingDataAmmount_txt.Text); // Divide the Percentage by 10 * the RowCount to find how many Rows yo use
+                    if (Percentage > 100) { MessageBox.Show("Data Set Ammount set to 100%\nCannot be over 100%"); Percentage = 100; }
+                }
+                catch { Percentage = 2; MessageBox.Show("Please enter Number from 1 to 100, Defaulting to: " + Percentage.ToString()); }
+            }
+            else
+            {
+                Percentage = 2;
+            }
+            double Row_D = Percentage / 100 * rowCount;
+            DataSetAmmount_txt.Text = Percentage.ToString();
+            int Rows = Convert.ToInt32(Row_D);
+            int offSet;
 
-                        data[j-4] = (range.Cells[i, j].Text);                      
+            if (DataSetUsesTraingData_cb.Checked)
+            {
+                double PercentageofTraing = Convert.ToDouble(TraingDataAmmount_txt.Text);
+                offSet = Convert.ToInt32(PercentageofTraing / 100 * rowCount);
+                Rows += offSet;
+            }
+            else
+            {
+                offSet=1;
+            }
+            int n = offSet = 500;
+                for (int i = offSet; i <= Rows; i++) // using the Seccind set of 8000 ROWS for this PART
+                {
+                    for (int j = 4; j < 9; j++) // Goto 9 For all relavent Data int the END GOAL
+                    {
+                        // check if cell has DATA then read it
+                        if (range.Cells[i, j] != null && range.Cells[i, j].Text != null)
+                        {
+
+                            data[j - 4] = (range.Cells[i, j].Text);
+
+                        }
+                    }
+
+
+                    // Run Through Each Part of the Data Packet againts its Trained NODE
+                    double safety = SourceAddressNodeAnalyse(src_G, srcCommonality_G, data[0]);
+                    safety_Array[0] = safety;
+                    safety = DistAddressNodeAnalyse(dist_G, distCommonality_G, data[1]);
+                    safety_Array[1] = safety;
+                    safety = ProtocolNodeAnalyse(protocol_G, protocolCommonality_G, data[2]);
+                    safety_Array[2] = safety;
+                    safety = srcPortNodeAnalyse(protocol_G, protocolCommonality_G, data[3]);
+                    safety_Array[3] = safety;
+                    safety = distPortNodeAnalyse(protocol_G, protocolCommonality_G, data[4]);
+                    safety_Array[4] = safety;
+
+
+                    double saftyRating = 0;
+                    foreach (double commanality in safety_Array)
+                    {
+                        saftyRating = saftyRating + commanality;
 
                     }
+                    saftyRating = saftyRating / 5; // ideally to be 6 by the END
+                    if (saftyRating < sensitivity)
+                    {
+                        Console.WriteLine("Packet: " + i + " Has Been Flagged With Rating of: " + saftyRating.ToString());
+                    }
+                    if (i > n) { Console.WriteLine("Status: " + i.ToString() + "/" + 16000.ToString()); n += 500; }
+
                 }
-
-
-                // Run Through Each Part of the Data Packet againts its Trained NODE
-                double safety = SourceAddressNodeAnalyse(src_G,srcCommonality_G,data[0]);
-                safety_Array[0] = safety;
-                safety = DistAddressNodeAnalyse(dist_G, distCommonality_G, data[1]);
-                safety_Array[1] = safety;
-                safety = ProtocolNodeAnalyse(protocol_G, protocolCommonality_G, data[2]);
-                safety_Array[2] = safety;
-                safety = srcPortNodeAnalyse(protocol_G, protocolCommonality_G, data[3]);
-                safety_Array[3] = safety;
-                safety = distPortNodeAnalyse(protocol_G, protocolCommonality_G, data[4]);
-                safety_Array[4] = safety;
-
-
-                double saftyRating=0;
-                foreach(double commanality in safety_Array)
-                {
-                    saftyRating = saftyRating + commanality;
-                    
-                }
-                saftyRating = saftyRating / 5; // ideally to be 6 by the END
-                if(saftyRating < sensitivity)
-                {
-                    Console.WriteLine("Packet: " + i  + " Has Been Flagged With Rating of: " + saftyRating.ToString());
-                }
-                if (i > n) { Console.WriteLine("Status: " + i.ToString() + "/" + 16000.ToString()); n += 500; }
-    
-            }
+            
             //clean excel process
             Console.WriteLine("Done.. Starting clean up");
             GC.Collect();
@@ -189,11 +241,28 @@ namespace IDS_BASE
             string[] scrape(int coloum) {
                 // count of used rows 
                 int rowCount = range.Rows.Count;
-                 // Selets the coloum to Scrape
-                                //itrate thew every single ROW for a SELECTED Coloum            
+                double Percentage;
+                if (TraingDataAmmount_txt.Text != string.Empty) // check if they Enterd a Precentage
+                {
+                    try // Check if they enterd a valid Precentage 
+                    {   
+                        Percentage = Convert.ToDouble(TraingDataAmmount_txt.Text); // Divide the Percentage by 10 * the RowCount to find how many Rows yo use
+                        if (Percentage > 100) { MessageBox.Show("Training Data Ammount set to 100%\nCannot be over 100%"); Percentage = 100; }
+                    }
+                    catch { Percentage = 2; MessageBox.Show("Please enter Number from 1 to 100, Defaulting to: "+ Percentage.ToString());  }
+                }
+                else 
+                {  
+                   Percentage = 2; 
+                }
+                double Row_D = Percentage / 100 * rowCount;
+                TraingDataAmmount_txt.Text = Percentage.ToString();
+                int Rows = Convert.ToInt32(Row_D);  
+                // Selets the coloum to Scrape
+                //itrate thew every single ROW for a SELECTED Coloum            
                 int n = 500;
                 List<string> Scrape = new List<string> { };
-                for (int i = 2; i <= 8000; i++)
+                for (int i = 2; i <= Rows; i++)
                 {
                     if (i > n) { Console.WriteLine(i.ToString()); n += 500; }
                     if (range.Cells[i, coloum] != null && range.Cells[i, coloum].Text != null)
@@ -514,6 +583,8 @@ namespace IDS_BASE
             }
             return 0;
         }
+
+       
 
        
     }
