@@ -6,9 +6,12 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 
 namespace IDS_BASE
-{
+{                  
     public partial class Form1 : Form
-    {
+    {       // Author Callum Du Heaume
+            // Title: Intrustion detection project
+            // Due 9/05/2022
+           
         string[]? src_G;
         double[]? srcCommonality_G;
         string[]? dist_G;
@@ -32,26 +35,30 @@ namespace IDS_BASE
 
             // Hard Coded for TESTING need to make user changable
             string FilePath = TrainingDataPath_txt.Text;
-             Input(@"H:\Visual Studio Solutions\IDS BASE\IDS BASE\bin\Debug\DATA\MixedBefireInfection.xlsx"); // FilePath Goes Here
+            Input(FilePath); //Starts the Reading Process
+            // Input(@"H:\Visual Studio Solutions\IDS BASE\IDS BASE\bin\Debug\DATA\MixedBefireInfection.xlsx"); // FilePath Goes Here
         }
         private void Analyse_btn_Click(object sender, EventArgs e)
         {
 
             string FilePath = DataSetPath_txt.Text;
-            double[] safetyRating = Analyse(@"H:\Visual Studio Solutions\IDS BASE\IDS BASE\bin\Debug\DATA\MixedBefireInfection.xlsx"); // FilePath Goes here
-
+            double[] safetyRating = Analyse(FilePath); // FilePath Goes here
+            //double[] safetyRating = Analyse(@"H:\Visual Studio Solutions\IDS BASE\IDS BASE\bin\Debug\DATA\MixedBefireInfection.xlsx"); // FilePath Goes here
         }
         private void TrainData_btn_Click(object sender, EventArgs e)
-        {
+        { // Opens the File Explorer Dialog And Saves the Selcted File
             openFileDialog1.ShowDialog();
-           
-            TrainingDataPath_txt.Text = openFileDialog1.FileName + @"\";
+            string FilePath = openFileDialog1.FileName;
+            FilePath = FilePath.Substring(0, FilePath.Length);
+            TrainingDataPath_txt.Text = FilePath;
 
         }
         private void MainData_btn_Click(object sender, EventArgs e)
-        {
+        {// Opens the File Explorer Dialog And Saves the Selcted File
             openFileDialog1.ShowDialog();
-            DataSetPath_txt.Text = openFileDialog1.FileName + @"\";
+            string FilePath = openFileDialog1.FileName;
+            FilePath = FilePath.Substring(0, FilePath.Length);
+            DataSetPath_txt.Text = FilePath;
         }
         private void Sensitivity_tb_Scroll(object sender, EventArgs e)
         {
@@ -80,7 +87,7 @@ namespace IDS_BASE
         }
 
 
-
+     
 
         public double[] Analyse(string dataSet)
         {
@@ -106,7 +113,7 @@ namespace IDS_BASE
             // Opens the workbook File
             wkb = excel.Workbooks.Open(dataSet);
             //opens the sheet *Need to make the name changable / open sheet [1] by default*
-            sheet = wkb.Sheets["MixedBefireInfection"];
+            sheet = wkb.Sheets[1];
             // gets the used number of used cells
             range = sheet.UsedRange;
             // count of used rows and coloums
@@ -121,7 +128,7 @@ namespace IDS_BASE
             {
                 try // Check if they enterd a valid Precentage 
                 {
-                    Percentage = Convert.ToDouble(TraingDataAmmount_txt.Text); // Divide the Percentage by 10 * the RowCount to find how many Rows yo use
+                    Percentage = Convert.ToDouble(DataSetAmmount_txt.Text); // Divide the Percentage by 10 * the RowCount to find how many Rows yo use
                     if (Percentage > 100) { MessageBox.Show("Data Set Ammount set to 100%\nCannot be over 100%"); Percentage = 100; }
                 }
                 catch { Percentage = 2; MessageBox.Show("Please enter Number from 1 to 100, Defaulting to: " + Percentage.ToString()); }
@@ -145,8 +152,12 @@ namespace IDS_BASE
             {
                 offSet=1;
             }
-            int n = offSet = 500;
-                for (int i = offSet; i <= Rows; i++) // using the Seccind set of 8000 ROWS for this PART
+            int n = offSet + 500;
+            
+            MainProgressBar.Maximum = Rows;
+            MainProgressBar.Minimum = offSet;
+            MainProgressBar.Value = MainProgressBar.Minimum;
+            for (int i = offSet; i <= Rows; i++) // using the Seccind set of 8000 ROWS for this PART
                 {
                     for (int j = 4; j < 9; j++) // Goto 9 For all relavent Data int the END GOAL
                     {
@@ -159,7 +170,7 @@ namespace IDS_BASE
                         }
                     }
 
-
+                    
                     // Run Through Each Part of the Data Packet againts its Trained NODE
                     double safety = SourceAddressNodeAnalyse(src_G, srcCommonality_G, data[0]);
                     safety_Array[0] = safety;
@@ -172,7 +183,7 @@ namespace IDS_BASE
                     safety = distPortNodeAnalyse(protocol_G, protocolCommonality_G, data[4]);
                     safety_Array[4] = safety;
 
-
+                    
                     double saftyRating = 0;
                     foreach (double commanality in safety_Array)
                     {
@@ -182,11 +193,18 @@ namespace IDS_BASE
                     saftyRating = saftyRating / 5; // ideally to be 6 by the END
                     if (saftyRating < sensitivity)
                     {
-                        Console.WriteLine("Packet: " + i + " Has Been Flagged With Rating of: " + saftyRating.ToString());
-                    }
-                    if (i > n) { Console.WriteLine("Status: " + i.ToString() + "/" + 16000.ToString()); n += 500; }
-
+                     Console.WriteLine("Packet: " + i + " Has Been Flagged With Rating of: " + saftyRating.ToString());
+                    resultsDisplay_rtb.Text += "Packet: " + i + " Has Been Flagged With Rating of: " + saftyRating.ToString()+"\n";
                 }
+                    if (i > n) { Console.WriteLine("Status: " + i.ToString() + "/" + Rows.ToString()); n += 500;MainProgressBar.PerformStep();}
+
+            }
+
+            MainProgressBar.Value = MainProgressBar.Minimum;
+            MessageBox.Show("Done", "Completed Analyse");
+           
+            
+            
             
             //clean excel process
             Console.WriteLine("Done.. Starting clean up");
@@ -222,10 +240,11 @@ namespace IDS_BASE
             // Opens the workbook File
             wkb = excel.Workbooks.Open(filePath);
             //opens the sheet *Need to make the name changable / open sheet [1] by default*
-            sheet = wkb.Sheets["MixedBefireInfection"];
+            sheet = wkb.Sheets[1];
             // gets the used number of used cells
             range = sheet.UsedRange;
-
+            MainProgressBar.Minimum = 0;
+            MainProgressBar.Value = 0;
             string[] Results = scrape(4);
             (src_G, srcCommonality_G) = SourceAddressNodeTraining(Results);
             Results = scrape(5);
@@ -236,8 +255,8 @@ namespace IDS_BASE
             (srcPort_G, srcPortCommonality_G) = srcPortNodeTraining(Results);
             Results = scrape(8);
             (distPort_G, distPortCommonality_G) = distPortNodeTraining(Results);
-
-            // used to Scrape the Rows out of a single coloum !!! CAPED AT 15000 rows for testing because of SPEED !!!
+            
+            // used to Scrape the Rows out of a single coloum 
             string[] scrape(int coloum) {
                 // count of used rows 
                 int rowCount = range.Rows.Count;
@@ -246,14 +265,14 @@ namespace IDS_BASE
                 {
                     try // Check if they enterd a valid Precentage 
                     {   
-                        Percentage = Convert.ToDouble(TraingDataAmmount_txt.Text); // Divide the Percentage by 10 * the RowCount to find how many Rows yo use
-                        if (Percentage > 100) { MessageBox.Show("Training Data Ammount set to 100%\nCannot be over 100%"); Percentage = 100; }
+                        Percentage = Convert.ToDouble(TraingDataAmmount_txt.Text); // Divide the Percentage by 10 * the RowCount to find how many Rows to use
+                        if (Percentage > 100) { MessageBox.Show("Training Data Ammount set to 100%\nCannot be over 100%", "Traing Data Ammount"); Percentage = 100; }
                     }
-                    catch { Percentage = 2; MessageBox.Show("Please enter Number from 1 to 100, Defaulting to: "+ Percentage.ToString());  }
+                    catch { Percentage = 2; MessageBox.Show("Please enter Number from 1 to 100, Defaulting to: "+ Percentage.ToString() + "%", "Traing Data Ammount");  }
                 }
                 else 
                 {  
-                   Percentage = 2; 
+                   Percentage = 2; MessageBox.Show("Please enter Number from 1 to 100, Defaulting to: "+Percentage.ToString()+"%", "Traing Data Ammount");
                 }
                 double Row_D = Percentage / 100 * rowCount;
                 TraingDataAmmount_txt.Text = Percentage.ToString();
@@ -262,9 +281,12 @@ namespace IDS_BASE
                 //itrate thew every single ROW for a SELECTED Coloum            
                 int n = 500;
                 List<string> Scrape = new List<string> { };
+                MainProgressBar.Maximum = Rows*5;
+                MainProgressBar.Minimum = 2;
+               
                 for (int i = 2; i <= Rows; i++)
                 {
-                    if (i > n) { Console.WriteLine(i.ToString()); n += 500; }
+                    if (i > n) { Console.WriteLine(i.ToString()); n += 500;MainProgressBar.PerformStep();}  // Progress Tracking for Progress Bar
                     if (range.Cells[i, coloum] != null && range.Cells[i, coloum].Text != null)
                     {
 
@@ -273,7 +295,7 @@ namespace IDS_BASE
                         //TESTING BLOCK
                         // Console.Write(range.Cells[i, 4].Text + "\t");
                         //Console.Write("\r\n");
-
+                        //End
                     }
 
                 }
@@ -284,8 +306,9 @@ namespace IDS_BASE
                 Scrape.Clear();
                 return Results;
             }
-
-
+            // End Of Scrape
+            MainProgressBar.Value = 2;
+            MessageBox.Show("Done", "Completed Training");
 
 
 
@@ -472,7 +495,6 @@ namespace IDS_BASE
             }
             return 0;
         }
-
         public (string[], double[]) srcPortNodeTraining(string[] srcPorts)
         {
 
@@ -583,9 +605,10 @@ namespace IDS_BASE
             }
             return 0;
         }
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            Application.Exit();
+        }
 
-       
-
-       
     }
 }

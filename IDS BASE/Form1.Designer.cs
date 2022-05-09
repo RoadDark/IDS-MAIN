@@ -50,6 +50,8 @@
             this.SensitivityTip_pb = new System.Windows.Forms.PictureBox();
             this.Sensitivity_tb = new System.Windows.Forms.TrackBar();
             this.Sensitivity_lbl = new System.Windows.Forms.Label();
+            this.MainProgressBar = new System.Windows.Forms.ProgressBar();
+            this.resultsDisplay_rtb = new System.Windows.Forms.RichTextBox();
             this.Config_gb.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetCheck_pb)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataSet_pb)).BeginInit();
@@ -143,7 +145,7 @@
             this.Config_gb.Controls.Add(this.sensitivity_txt);
             this.Config_gb.Location = new System.Drawing.Point(12, 130);
             this.Config_gb.Name = "Config_gb";
-            this.Config_gb.Size = new System.Drawing.Size(261, 409);
+            this.Config_gb.Size = new System.Drawing.Size(261, 365);
             this.Config_gb.TabIndex = 7;
             this.Config_gb.TabStop = false;
             this.Config_gb.Text = "Configuratation";
@@ -255,11 +257,30 @@
             this.Sensitivity_lbl.TabIndex = 8;
             this.Sensitivity_lbl.Text = "Adjust Sensitivity";
             // 
+            // MainProgressBar
+            // 
+            this.MainProgressBar.ForeColor = System.Drawing.Color.Lime;
+            this.MainProgressBar.Location = new System.Drawing.Point(12, 501);
+            this.MainProgressBar.Name = "MainProgressBar";
+            this.MainProgressBar.Size = new System.Drawing.Size(261, 27);
+            this.MainProgressBar.Step = 500;
+            this.MainProgressBar.TabIndex = 8;
+            // 
+            // resultsDisplay_rtb
+            // 
+            this.resultsDisplay_rtb.Location = new System.Drawing.Point(279, 130);
+            this.resultsDisplay_rtb.Name = "resultsDisplay_rtb";
+            this.resultsDisplay_rtb.Size = new System.Drawing.Size(418, 365);
+            this.resultsDisplay_rtb.TabIndex = 9;
+            this.resultsDisplay_rtb.Text = "";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1008, 551);
+            this.ClientSize = new System.Drawing.Size(729, 562);
+            this.Controls.Add(this.resultsDisplay_rtb);
+            this.Controls.Add(this.MainProgressBar);
             this.Controls.Add(this.Config_gb);
             this.Controls.Add(this.DataSetPath_txt);
             this.Controls.Add(this.TrainingDataPath_txt);
@@ -267,8 +288,11 @@
             this.Controls.Add(this.TrainData_btn);
             this.Controls.Add(this.Analyse_btn);
             this.Controls.Add(this.RUN_btn);
+            this.MaximumSize = new System.Drawing.Size(745, 601);
+            this.MinimumSize = new System.Drawing.Size(745, 601);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "IDS System";
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.Config_gb.ResumeLayout(false);
             this.Config_gb.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetCheck_pb)).EndInit();
@@ -304,5 +328,7 @@
         private PictureBox dataSet_pb;
         private CheckBox DataSetUsesTraingData_cb;
         private PictureBox dataSetCheck_pb;
+        private ProgressBar MainProgressBar;
+        private RichTextBox resultsDisplay_rtb;
     }
 }
